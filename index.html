@@ -1,0 +1,307 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>🚀 ET AI Investor</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+            color: white;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            font-size: 14px;
+            min-height: 100vh;
+            padding: 15px;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: rgba(30, 41, 59, 0.95);
+            border-radius: 15px;
+            padding: 20px;
+            box-shadow: 0 15px 30px rgba(0,0,0,0.3);
+        }
+        h1 { 
+            text-align: center; 
+            background: linear-gradient(45deg, #38bdf8, #10b981);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            font-size: 1.8em; 
+            margin-bottom: 8px;
+        }
+        h2 { 
+            text-align: center; 
+            color: #94a3b8;
+            margin-bottom: 20px;
+            font-size: 1em; 
+        }
+        .section {
+            background: rgba(15, 23, 42, 0.8);
+            border-radius: 12px;
+            padding: 18px;
+            margin-bottom: 20px;
+            border: 2px solid transparent;
+            transition: all 0.3s ease;
+        }
+        .section:hover { border-color: #38bdf8; box-shadow: 0 8px 20px rgba(56, 189, 248, 0.2); }
+        .section h3 {
+            color: #38bdf8;
+            margin-bottom: 15px;
+            font-size: 1.2em; 
+        }
+        input[type="text"], input[type="file"] {
+            width: 65%;
+            padding: 10px;
+            border: none;
+            border-radius: 8px;
+            background: rgba(255,255,255,0.1);
+            color: white;
+            font-size: 14px;
+            margin-right: 10px;
+        }
+        input[type="text"]::placeholder { color: #94a3b8; }
+        button {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin: 3px;
+        }
+        .analyze-btn { background: linear-gradient(45deg, #38bdf8, #0ea5e9); color: white; }
+        .analyze-btn:hover { transform: translateY(-1px); box-shadow: 0 5px 15px rgba(56, 189, 248, 0.4); }
+        .portfolio-btn { background: linear-gradient(45deg, #10b981, #059669); color: white; }
+        .portfolio-btn:hover { transform: translateY(-1px); box-shadow: 0 5px 15px rgba(16, 185, 129, 0.4); }
+        .result-card {
+            background: rgba(16, 185, 129, 0.2);
+            border: 2px solid #10b981;
+            border-radius: 12px;
+            padding: 18px;
+            margin-top: 15px;
+        }
+        .error-card {
+            background: rgba(239, 68, 68, 0.2);
+            border: 2px solid #ef4444;
+            border-radius: 12px;
+            padding: 18px;
+            margin-top: 15px;
+        }
+        .price-card {
+            background: rgba(0,0,0,0.3);
+            border-radius: 8px;
+            padding: 12px;
+            margin-bottom: 15px;
+            text-align: center;
+            border-left: 4px solid #38bdf8;
+        }
+        .metric-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+            gap: 15px;
+            margin: 15px 0;
+        }
+        .metric {
+            background: rgba(255,255,255,0.1);
+            padding: 15px;
+            border-radius: 8px;
+            text-align: center;
+        }
+        .metric h4 { 
+            color: #38bdf8; 
+            margin-bottom: 8px; 
+            font-size: 0.9em; 
+        }
+        .metric-value { 
+            font-size: 1.6em; 
+            font-weight: bold; 
+        }
+        .green { color: #10b981; }
+        .red { color: #ef4444; }
+        .signal { 
+            padding: 6px 10px;
+            background: rgba(56, 189, 248, 0.2); 
+            border-radius: 15px; 
+            margin: 3px; 
+            display: inline-block; 
+            font-size: 13px;
+        }
+        #chartContainer { 
+            max-height: 350px; 
+            margin-top: 15px; 
+        }
+        @media (max-width: 768px) {
+            .container { padding: 15px; margin: 5px; }
+            input[type="text"], input[type="file"] { width: 100%; margin-bottom: 8px; }
+            button { width: 100%; }
+            h1 { font-size: 1.5em; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🚀 ET AI Investor</h1>
+        <h2>Problem 6: 14cr Demat Accounts</h2>
+        
+        <div class="section">
+            <h3>🎯 Opportunity Radar</h3>
+            <input type="text" id="stock" placeholder="RELIANCE, TCS, INFY, HDFCBANK, SUL" />
+            <button class="analyze-btn" onclick="analyzeStock()">📈 Analyze</button>
+        </div>
+
+        <div class="section">
+            <h3>📊 Portfolio X-Ray</h3>
+            <input type="file" id="portfolio" accept=".csv" />
+            <button class="portfolio-btn" onclick="analyzePortfolio()">💰 Analyze</button>
+        </div>
+
+        <div id="result"></div>
+        <div id="chartContainer">
+            <canvas id="chart"></canvas>
+        </div>
+    </div>
+
+    <script>
+        let chart;
+
+        async function analyzeStock() {
+            const stock = document.getElementById("stock").value.trim().toUpperCase();
+            if (!stock) return alert("Enter stock symbol");
+
+            document.getElementById("result").innerHTML = '<div class="metric-grid"><div class="metric">🔄 Analyzing...</div></div>';
+            
+            try {
+                const res = await fetch("http://127.0.0.1:5000/analyze", {
+                    method: "POST",
+                    headers: {"Content-Type": "application/json"},
+                    body: JSON.stringify({symbol: stock})
+                });
+                const data = await res.json();
+
+                if (data.error) {
+                    document.getElementById("result").innerHTML = `<div class="error-card">❌ ${data.error}</div>`;
+                    return;
+                }
+
+                let signalsHtml = data.signals.map(s => `<span class="signal">${s}</span>`).join('');
+                let changeColor = data.price_change.includes('+') ? 'green' : 'red';
+                
+                document.getElementById("result").innerHTML = `
+                    <div class="result-card">
+                        <h3>📈 ${data.stock}</h3>
+                        
+                        <div class="price-card">
+                            <div style="font-size: 1.4em; font-weight: bold;">
+                                💰 ₹${data.current_price.toLocaleString()}
+                            </div>
+                            <div class="${changeColor}" style="font-size: 1.1em;">
+                                ${data.price_change}
+                            </div>
+                            <div style="font-size: 0.9em; opacity: 0.8;">
+                                ${data.market_trend}
+                            </div>
+                        </div>
+                        
+                        <div class="metric-grid">
+                            <div class="metric">
+                                <h4>Decision</h4>
+                                <div class="metric-value ${data.decision.includes('🟢') ? 'green' : data.decision.includes('🔴') ? 'red' : ''}">${data.decision}</div>
+                            </div>
+                            <div class="metric">
+                                <h4>Confidence</h4>
+                                <div class="metric-value">${data.confidence}%</div>
+                            </div>
+                            <div class="metric">
+                                <h4>XIRR Est.</h4>
+                                <div class="metric-value green">${data.xirr_estimate}%</div>
+                            </div>
+                        </div>
+                        <h4>Signals:</h4>
+                        <div>${signalsHtml}</div>
+                    </div>
+                `;
+                if (data.chart) drawChart(data.chart);
+            } catch(e) {
+                document.getElementById("result").innerHTML = '<div class="error-card">❌ Server not running! Run: python main.py</div>';
+            }
+        }
+
+        async function analyzePortfolio() {
+            const file = document.getElementById("portfolio").files[0];
+            if (!file) return alert("Upload CSV file");
+
+            document.getElementById("result").innerHTML = '<div class="metric-grid"><div class="metric">🔄 Analyzing...</div></div>';
+            
+            const formData = new FormData();
+            formData.append('file', file);
+            
+            try {
+                const res = await fetch("http://127.0.0.1:5000/api/portfolio/xray", {
+                    method: "POST",
+                    body: formData
+                });
+                const data = await res.json();
+
+                let overlapsHtml = data.overlaps.map(o => 
+                    `<div>${o.fund1} ↔ ${o.fund2}: ${(o.overlap*100).toFixed(1)}%</div>`
+                ).join('');
+                
+                let recsHtml = data.recommendations.map(r => 
+                    `<div><strong>${r.action}</strong><br>Funds: ${r.funds.join(', ')}<br><span class="green">₹${r.savings.toLocaleString()}</span></div>`
+                ).join('');
+
+                document.getElementById("result").innerHTML = `
+                    <div class="result-card">
+                        <h3>💰 Portfolio X-Ray</h3>
+                        <div class="metric-grid">
+                            <div class="metric">
+                                <h4>XIRR</h4>
+                                <div class="metric-value green">${data.xirr}%</div>
+                                <p>Benchmark: ${data.benchmark}%</p>
+                            </div>
+                            <div class="metric">
+                                <h4>Savings</h4>
+                                <div class="metric-value green">₹${data.estimated_savings.toLocaleString()}</div>
+                            </div>
+                        </div>
+                        ${data.overlaps.length ? `<h4>🔄 Overlaps:</h4><div style="font-size:13px;">${overlapsHtml}</div>` : ''}
+                        <h4>💡 Recommendations:</h4>
+                        <div style="font-size:13px;">${recsHtml}</div>
+                    </div>
+                `;
+            } catch(e) {
+                document.getElementById("result").innerHTML = '<div class="error-card">❌ Server error. Check port 5000.</div>';
+            }
+        }
+
+        function drawChart(data) {
+            const ctx = document.getElementById("chart");
+            if (chart) chart.destroy();
+            chart = new Chart(ctx, {
+                type: "line",
+                data: {
+                    labels: data.dates,
+                    datasets: [
+                        { label: "Price", data: data.prices, borderColor: "#38bdf8", backgroundColor: "rgba(56,189,248,0.1)", fill: true, tension: 0.4 },
+                        { label: "MA5", data: data.ma5, borderColor: "#10b981", borderWidth: 2 },
+                        { label: "MA20", data: data.ma20, borderColor: "#f59e0b", borderWidth: 2 }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    plugins: { legend: { labels: { color: 'white', font: { size: 12 } } } },
+                    scales: {
+                        x: { ticks: { color: 'white', font: { size: 11 } } },
+                        y: { ticks: { color: 'white', font: { size: 11 } }, grid: { color: 'rgba(255,255,255,0.1)' } }
+                    }
+                }
+            });
+        }
+
+        document.getElementById("stock").addEventListener("keypress", function(e) {
+            if (e.key === "Enter") analyzeStock();
+        });
+    </script>
+</body>
+</html>
